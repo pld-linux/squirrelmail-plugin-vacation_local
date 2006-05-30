@@ -1,0 +1,21 @@
+diff -ur vacation_local.orig/vacation_binary/squirrelmail_vacation_proxy.c vacation_local/vacation_binary/squirrelmail_vacation_proxy.c
+--- vacation_local.orig/vacation_binary/squirrelmail_vacation_proxy.c	2005-02-02 08:21:47.000000000 +0100
++++ vacation_local/vacation_binary/squirrelmail_vacation_proxy.c	2006-05-30 10:29:26.283220750 +0200
+@@ -112,7 +112,7 @@
+ 	the valid user. */
+ 	if ((pwebuser=getpwnam(WEBUSER))==NULL)
+ 	{
+-		printf("Invalid webuser. %s\n");
++		printf("Invalid webuser.\n");
+ 		exit(1);
+ 	}
+ 	if( pwebuser->pw_uid != getuid() )
+@@ -123,7 +123,7 @@
+ #endif /* RESTRICTUSE */
+ 
+ 	if (argc != 7) {
+-		printf("Usage: %s server user password [list|put|get|delete] source destination \n",argv[0]);
++		printf("Usage: %s server user password [list|put|get|delete] source destination\n",argv[0]);
+ 		exit(1);
+ 	}
+ 
