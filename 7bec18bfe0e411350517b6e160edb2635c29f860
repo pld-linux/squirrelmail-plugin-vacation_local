@@ -1,0 +1,2 @@
+- R: php-ftp
+- set suid bit as required by plugin, added warning to description
