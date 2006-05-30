@@ -1,0 +1,19 @@
+diff -ur vacation_local.orig/vacation_binary/Makefile vacation_local/vacation_binary/Makefile
+--- vacation_local.orig/vacation_binary/Makefile	2005-02-02 08:16:43.000000000 +0100
++++ vacation_local/vacation_binary/Makefile	2006-04-25 18:27:46.788955500 +0200
+@@ -1,7 +1,7 @@
+-include config.mk
++#include config.mk
+ 
+ OBJECTS = squirrelmail_vacation_proxy.o
+-LIBS = $(LCRYPT)
++LIBS = -lcrypt
+ 
+ squirrelmail_vacation_proxy: $(OBJECTS)
+ 	cc -o squirrelmail_vacation_proxy $(LFLAGS) $(OBJECTS) $(LIBS)
+@@ -13,4 +13,4 @@
+ 	rm -f *.o *~* core squirrelmail_vacation_proxy 
+ 
+ squirrelmail_vacation_proxy.o: squirrelmail_vacation_proxy.c
+-	cc -c $(CFLAGS) $(DEBUG) $(USESHADOW) $(NOROOT) $(RESTRICTUSE) -D WEBUSER=\"$(WEBUSER)\" squirrelmail_vacation_proxy.c
++	cc -c $(CFLAGS) -D NOROOT -D RESTRICTUSE -D WEBUSER=\"http\" squirrelmail_vacation_proxy.c
