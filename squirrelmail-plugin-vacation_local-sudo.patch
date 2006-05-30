@@ -1,0 +1,218 @@
+diff -urN vacation_local.orig/config.php.sample vacation_local/config.php.sample
+--- vacation_local.orig/config.php.sample	2006-05-30 20:07:38.000000000 +0200
++++ vacation_local/config.php.sample	2006-05-30 20:08:56.516224500 +0200
+@@ -1,19 +1,19 @@
+ <?php
+ 
+ global $forward_data, $sq_vacation_file, $vacation_file,
+-       $username, $mail_vacation_binary, $sq_forward_addresses_file,
+-       $vacation_delete, $mail_vacation_binary, $forward_file,
+-       $vac_debug, $vacation_backend, $ftp_server, $ftp_passive,
+-       $sq_vacation_subject_file, $ldap_lookup_ftp_server,
+-       $vacation_path, $maintain_dot_forward_file, $vacation_prefs_file,
++       $username, $sudo_binary, $sq_forward_addresses_file,
++       $vacation_delete, $forward_file, $vac_debug, $vacation_backend,
++       $ftp_server, $ftp_passive, $sq_vacation_subject_file,
++       $ldap_lookup_ftp_server, $vacation_path,
++       $maintain_dot_forward_file, $vacation_prefs_file,
+        $ldap_base, $ldap_server, $ldap_attribute;
+ 
+ 
+ // Choose the method to be used when connecting to your
+-// server to maintain vacation files: "ftp" or "suid"
++// server to maintain vacation files: "ftp" or "sudo"
+ //
+-//$vacation_backend = 'suid'; 
+-$vacation_backend = 'ftp'; 
++$vacation_backend = 'sudo'; 
++//$vacation_backend = 'ftp'; 
+ 
+ 
+ 
+@@ -51,13 +51,10 @@
+ 
+ 
+ 
+-// If you are using the suid backend, this is the location
+-// of the binary that writes vacation messages to local disk.  
+-// If you change this, don't forget to change the same setting 
+-// to match in vacation_binary/config.mk as well
++// If you are using the sudo backend, this is the location
++// of the sudo binary
+ //
+-//$mail_vacation_binary = '/usr/local/sbin/squirrelmail_vacation_proxy';
+-$mail_vacation_binary = './squirrelmail_vacation_proxy';
++$sudo_binary = '/usr/bin/sudo';
+ 
+ 
+ 
+diff -urN vacation_local.orig/README vacation_local/README
+--- vacation_local.orig/README	2005-04-14 12:14:40.000000000 +0200
++++ vacation_local/README	2006-05-30 20:12:16.048694500 +0200
+@@ -20,10 +20,10 @@
+ users have real local accounts.
+ 
+ This plugin is capable of managing vacation files on your
+-server via either FTP or a local SUID program.  If you use
+-the SUID program, it will only work on a local system.  
+-You can choose between these functionalities in the config.php
+-file.  Also supported are lookups of FTP server name in LDAP.
++server via either FTP or SUDO program.  If you use the SUDO
++program, it will only work on a local system. You can choose
++between these functionalities in the config.php file.
++Also supported are lookups of FTP server name in LDAP.
+ 
+ This plugin is based on the vacation plugin written by 
+ Ronald Luten <r.luten@oad.nl>, which was itself based upon 
+diff -urN vacation_local.orig/README.sudo vacation_local/README.sudo
+--- vacation_local.orig/README.sudo	1970-01-01 01:00:00.000000000 +0100
++++ vacation_local/README.sudo	2006-05-30 23:14:02.254289750 +0200
+@@ -0,0 +1,48 @@
++How to use vacation_local plugin with sudo?
++
++1. Change backend type in config.php to sudo and change path to sudo
++   binary if required (default is /usr/bin/sudo)
++
++2. Add required entries to your /etc/sudoers. Following commands must
++   be allowed for user on which your apache runs:
++
++   test -s [homedir]/[remotefile]
++   cp [squirreldir]/[username].mailcfg.tmp [homedir]/[remotefile]
++   cp [homedir]/[remotefile] [squirreldir]/[username].mailcfg.tmp
++   chmod 644 [homedir]/[remotefile]
++   chmod 444 [squirreldir]/[username].mailcfg.tmp
++   chown [uid]:[gid] [homedir]/[remotefile]
++   rm [homedir]/[remotefile]
++
++   where:
++
++   [homedir] can be home directory of any user ie. /home/users/joe
++
++   [squirreldir] is SquirrelMail data directory defined in main config.php
++                 in variable $data_dir
++
++   [username] can be name of any user allowed to use SquirrelMail
++
++   [uid] can be user id of any user allowed to use SquirrelMail
++
++   [gid] can be group id of any user allowed to use SquirrelMail
++
++   [remotefile] can be name of any file used by vacation_local plugin,
++                they are defined in plugin config in following variables:
++		$vacation_prefs_file, $sq_vacation_subject_file,
++		$sq_forward_addresses_file, $sq_vacation_file,
++		$vacation_file, $vacation_delete, forward_file
++
++   Below is example of required sudoers content. It either can be minimized
++   or expanded using less or more precise command masks.
++
++   Cmnd_Alias VACATION = /usr/bin/test -s /home/*/.forward*, /usr/bin/test -s /home/*/.vacation.*, \
++                         /bin/cp /var/lib/squirrelmail/data/*.mailcfg.tmp /home/*/.forward*, \
++                         /bin/cp /var/lib/squirrelmail/data/*.mailcfg.tmp /home/*/.vacation*, \
++                         /bin/cp /home/*/.forward* /var/lib/squirrelmail/data/*.mailcfg.tmp, \
++                         /bin/cp /home/*/.vacation* /var/lib/squirrelmail/data/*.mailcfg.tmp, \
++                         /bin/chmod 444 /var/lib/squirrelmail/data/*.mailcfg.tmp, \
++                         /bin/chmod 644 /home/*/.forward*, /bin/chmod 644 /home/*/.vacation*, \
++                         /bin/chown * /home/*/.forward*, /bin/chown * /home/*/.vacation*, \
++                         /bin/rm /home/*/.forward*, /bin/rm /home/*/.vacation*
++   http ALL = NOPASSWD: VACATION
+diff -urN vacation_local.orig/vac_init.php vacation_local/vac_init.php
+--- vacation_local.orig/vac_init.php	2005-06-03 21:27:28.000000000 +0200
++++ vacation_local/vac_init.php	2006-05-30 20:38:16.842238000 +0200
+@@ -348,7 +348,7 @@
+ {
+ 
+    global $color, $username, $key, $onetimepad, $ftp_server, $ldap_attribute,
+-          $mail_vacation_binary, $vac_debug, $vacation_backend,
++          $sudo_binary, $vac_debug, $vacation_backend,
+           $ftp_passive, $ldap_lookup_ftp_server, $ldap_base, $ldap_server;
+ 
+ 
+@@ -479,12 +479,12 @@
+             else 
+                $result = FALSE;
+          }
+-         else // suid
++         elseif ($vacation_backend == 'sudo')
+          {
+-	    $list = exec($mail_vacation_binary . ' ' . $server . ' ' . $username 
+-                  . ' ' . $password . ' list ' . $remoteFile . ' ???', $output, $retval);
++            $userData = posix_getpwnam($username);
++            exec($sudo_binary . ' test -s ' . $userData['dir'] . '/' . $remoteFile, $output, $retval);
+  
+-            if ($list == $remoteFile) 
++            if (!$retval) 
+                $result = TRUE;
+             else
+                $result = FALSE;
+@@ -508,13 +508,17 @@
+                $result = FALSE;
+             }
+          }
+-         else // suid
++         elseif ($vacation_backend == 'sudo')
+          {
+-            $put = exec($mail_vacation_binary . ' ' . $server . ' ' . $username 
+-                 . ' ' . $password . ' put ' . $localFile . ' ' . $remoteFile, $output, $retval);
++            $userData = posix_getpwnam($username);
++            exec($sudo_binary . ' cp '. $localFile . ' ' . $userData['dir'] . '/' . $remoteFile, $output, $retval);
+ 
+-            if ($put != '')
++            if (!$retval)
++            {
++               exec($sudo_binary . ' chmod 644  ' . $userData['dir'] . '/' . $remoteFile , $output, $retval);
++               exec($sudo_binary . ' chown ' . $userData['uid'] . ':' . $userData['gid'] . ' ' . $userData['dir'] . '/' . $remoteFile, $output, $retval);
+                $result = TRUE;
++            }
+             else
+             {
+                plain_error_message(_("An error occurred uploading the file:") . ' ' . $output[0], $color);
+@@ -540,13 +544,16 @@
+                $result = FALSE;
+             }
+          }
+-         else // suid
++         elseif ($vacation_backend == 'sudo')
+          {
+-            $get = exec($mail_vacation_binary . ' ' . $server . ' ' . $username 
+-                 . ' ' . $password . ' get ' . $remoteFile . ' ' . $localFile, $output, $retval);
++            $userData = posix_getpwnam($username);
++            exec($sudo_binary . ' cp ' . $userData['dir'] . '/' . $remoteFile . ' ' . $localFile, $output, $retval);
+ 
+-            if ($get != '' && strpos($get, 'Usage') !== 0) 
++            if (!$retval) 
++            {
++               exec($sudo_binary . ' chmod 444 '. $localFile , $output, $retval);
+                $result = TRUE;
++            }
+             else
+             {
+                plain_error_message(_("An error occurred downloading the file:") . ' ' . $output[0], $color);
+@@ -576,17 +583,18 @@
+                   $result = FALSE;
+                }
+             }
+-            else // suid
++            elseif ($vacation_backend == 'sudo')
+             {
+-               $list = exec($mail_vacation_binary . ' ' . $server . ' ' . $username
+-                     . ' ' . $password . ' list ' . $file . ' ???', $output, $retval);
+-
+-               if ($list == $file) 
++               $userData = posix_getpwnam($username);
++               exec($sudo_binary . ' test -s ' . $userData['dir'] . '/' . $file, $output, $retval);
++               if (!$retval) 
+                {
+-                  $del = exec($mail_vacation_binary . ' ' . $server . ' '
+-                       . $username . ' ' . $password . ' delete ' . $file . ' ???', $output, $retval);
+-
+-                  if (!$del) 
++                  exec($sudo_binary . ' rm ' . $userData['dir'] . '/' . $file , $output, $retval);
++                  if (!$retval) 
++                  {
++                     $result = TRUE;
++                  }
++                  else
+                   {
+                      plain_error_message(_("An error occurred deleting the file:") . ' ' . $output[0], $color);
+                      $result = FALSE;
