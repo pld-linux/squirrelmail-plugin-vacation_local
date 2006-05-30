@@ -1,0 +1,34 @@
+diff -ur vacation_local.orig/config.php.sample vacation_local/config.php.sample
+--- vacation_local.orig/config.php.sample	2005-04-14 22:39:26.000000000 +0200
++++ vacation_local/config.php.sample	2006-05-30 20:07:38.107324250 +0200
+@@ -63,26 +63,26 @@
+ 
+ // This is the name of the file that holds user vacation prefs
+ //
+-$vacation_prefs_file = '.vacation.pref'; 
++$vacation_prefs_file = '.vacation.preferences'; 
+ 
+ 
+ 
+ // This is the name of the file that holds the 
+ // subject line for the vacation message
+ //
+-$sq_vacation_subject_file = '.forward.subj'; 
++$sq_vacation_subject_file = '.vacation.subject'; 
+ 
+ 
+ 
+ // This is the name of the file that holds the addresses to be forwarded to
+ //
+-$sq_forward_addresses_file = '.forward.fwd'; 
++$sq_forward_addresses_file = '.forward.addresses'; 
+ 
+ 
+ 
+ // This is the name of the file that holds the raw vacation message text
+ //
+-$sq_vacation_file = '.vacation.sq'; 
++$sq_vacation_file = '.vacation.body'; 
+ 
+ 
+ 
