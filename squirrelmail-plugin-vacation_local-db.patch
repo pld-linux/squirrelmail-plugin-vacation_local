@@ -1,0 +1,87 @@
+diff -urN vacation_local.orig/config.php.sample vacation_local/config.php.sample
+--- vacation_local.orig/config.php.sample	2006-05-31 15:20:01.000000000 +0200
++++ vacation_local/config.php.sample	2006-05-31 16:03:39.152109250 +0200
+@@ -7,7 +7,7 @@
+        $ldap_lookup_ftp_server, $vacation_path,
+        $maintain_dot_forward_file, $vacation_prefs_file,
+        $ldap_base, $ldap_server, $ldap_attribute,
+-       $sq_vacation_aliases_file;
++       $sq_vacation_aliases_file, $vacation_init;
+ 
+ 
+ // Choose the method to be used when connecting to your
+@@ -59,6 +59,15 @@
+ 
+ 
+ 
++// When user enables auto-reply should we try to initialize
++// .vacation.db by issuing vacation -I? Note: This will work
++// only when using sudo backend
++//
++$vacation_init = 0;
++//$vacation_init = 1;
++
++
++
+ // This is the name of the file that holds user vacation prefs
+ //
+ $vacation_prefs_file = '.vacation.preferences'; 
+diff -urN vacation_local.orig/README.sudo vacation_local/README.sudo
+--- vacation_local.orig/README.sudo	2006-05-31 15:20:01.000000000 +0200
++++ vacation_local/README.sudo	2006-05-31 16:06:03.229113500 +0200
+@@ -34,6 +34,10 @@
+ 		$vacation_file, $vacation_delete, forward_file,
+ 		$sq_vacation_aliases
+ 
++   Optionally you may need to allow 'vacation -I' if $vacation_init is
++   enabled in plugin configuration. If you do so, be sure to allow it
++   to be executed as any user.
++
+    Below is example of required sudoers content. It either can be minimized
+    or expanded using less or more precise command masks.
+ 
+@@ -46,4 +50,5 @@
+                          /bin/chmod 644 /home/*/.forward*, /bin/chmod 644 /home/*/.vacation*, \
+                          /bin/chown * /home/*/.forward*, /bin/chown * /home/*/.vacation*, \
+                          /bin/rm /home/*/.forward*, /bin/rm /home/*/.vacation*
+-   http ALL = NOPASSWD: VACATION
++   Cmnd_Alias VACATION_INIT = /usr/bin/vacation -I
++   http ALL = NOPASSWD: VACATION, (ALL) VACATION_INIT
+diff -urN vacation_local.orig/vac_init.php vacation_local/vac_init.php
+--- vacation_local.orig/vac_init.php	2006-05-31 15:20:01.000000000 +0200
++++ vacation_local/vac_init.php	2006-05-31 16:14:59.438624500 +0200
+@@ -33,7 +33,7 @@
+        $sq_vacation_subject_file, $maintain_dot_forward_file,
+        $username, $vacation_path, $data_dir, $domain,
+        $forward_file, $color, $sq_vacation_aliases_file,
+-       $vacation_aliases;
++       $vacation_aliases, $vacation_init;
+ 
+ 
+ 
+@@ -217,8 +217,25 @@
+    // pipe to vacation executable
+    //
+    if ($do_autoreply)
++   {
+       $forward_file_contents .= '"|' . $vacation_path . ' '
+                              . $alias_list . $username . "\"\n";
++      // if .vacation.db initialization is enabled and we are
++      // using sudo backend we need to execute vacation -I
++      //
++      if ($vacation_backend == 'sudo' && $vacation_init)
++      {
++         exec($sudo_binary . ' -u ' . $username . ' ' . $vacation_path . ' -I', $output, $retval);
++      }
++   }
++   // when auto-reply is disabled we should remove files
++   // listed in $vacation_delete
++   //
++   else
++   {
++      do_action('delete', $vacation_delete);
++   }
++
+ 
+ 
+    // if we have no other .forward contents to here,
