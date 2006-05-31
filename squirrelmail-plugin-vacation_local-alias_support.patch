@@ -1,0 +1,107 @@
+diff -urN vacation_local.orig/config.php.sample vacation_local/config.php.sample
+--- vacation_local.orig/config.php.sample	2006-05-31 00:23:55.176331000 +0200
++++ vacation_local/config.php.sample	2006-05-31 14:50:01.144001000 +0200
+@@ -6,7 +6,8 @@
+        $ftp_server, $ftp_passive, $sq_vacation_subject_file,
+        $ldap_lookup_ftp_server, $vacation_path,
+        $maintain_dot_forward_file, $vacation_prefs_file,
+-       $ldap_base, $ldap_server, $ldap_attribute;
++       $ldap_base, $ldap_server, $ldap_attribute,
++       $sq_vacation_aliases_file;
+ 
+ 
+ // Choose the method to be used when connecting to your
+@@ -77,6 +78,13 @@
+ 
+ 
+ 
++// This is the name of the file that holds list of account aliases
++// for which vacation should also generate auto-replies
++//
++$sq_vacation_aliases_file = '.vacation.aliases'; 
++
++
++
+ // This is the name of the file that holds the raw vacation message text
+ //
+ $sq_vacation_file = '.vacation.body'; 
+diff -urN vacation_local.orig/README.sudo vacation_local/README.sudo
+--- vacation_local.orig/README.sudo	2006-05-31 00:23:55.176331000 +0200
++++ vacation_local/README.sudo	2006-05-31 14:50:01.144001000 +0200
+@@ -31,7 +31,8 @@
+                 they are defined in plugin config in following variables:
+ 		$vacation_prefs_file, $sq_vacation_subject_file,
+ 		$sq_forward_addresses_file, $sq_vacation_file,
+-		$vacation_file, $vacation_delete, forward_file
++		$vacation_file, $vacation_delete, forward_file,
++		$sq_vacation_aliases
+ 
+    Below is example of required sudoers content. It either can be minimized
+    or expanded using less or more precise command masks.
+diff -urN vacation_local.orig/vac_init.php vacation_local/vac_init.php
+--- vacation_local.orig/vac_init.php	2006-05-31 00:23:55.180331250 +0200
++++ vacation_local/vac_init.php	2006-05-31 15:02:34.987113250 +0200
+@@ -32,7 +32,8 @@
+        $sq_forward_addresses_file, $vacation_prefs_file,
+        $sq_vacation_subject_file, $maintain_dot_forward_file,
+        $username, $vacation_path, $data_dir, $domain,
+-       $forward_file, $color;
++       $forward_file, $color, $sq_vacation_aliases_file,
++       $vacation_aliases;
+ 
+ 
+ 
+@@ -82,6 +83,8 @@
+    $vacation_message = download_data($sq_vacation_file);
+ if (do_action('list', $sq_forward_addresses_file))
+    $forward_addresses = download_data($sq_forward_addresses_file);
++if (do_action('list', $sq_vacation_aliases_file))
++   $vacation_aliases = download_data($sq_vacation_aliases_file);
+ 
+ 
+ 
+@@ -102,12 +105,14 @@
+ 
+ 
+    sqgetGlobalVar('vacation_subject', $vacation_subject, SQ_FORM);
++   sqgetGlobalVar('vacation_aliases', $vacation_aliases, SQ_FORM);
+    sqgetGlobalVar('vacation_message', $vacation_message, SQ_FORM);
+ 
+ 
+    // now upload them
+    //
+    upload_data($vacation_subject, $sq_vacation_subject_file);
++   upload_data($vacation_aliases, $sq_vacation_aliases_file);
+    upload_data($vacation_message, $sq_vacation_file);
+    $vac_pref_array = array('do_autoreply' => $do_autoreply, 
+                            'do_forward' => $do_forward,
+@@ -159,6 +164,17 @@
+  
+ 
+ 
++// since identity editing is often disabled for security reasons
++// we will support aliases defined in vacation settings
++foreach (explode("\n", $vacation_aliases) as $vacation_alias)
++{
++   preg_match('/(^[-_.[:alnum:]]+)/', $vacation_alias, $alias);
++   if (isset($alias[1]) && $alias[1] != $username)
++      $alias_list .= '-a ' . $alias[1] . ' ';
++}
++
++
++
+ // get user's real name for use in the reply header
+ //
+ $full_name = getPref($data_dir, $username, 'full_name');
+@@ -282,7 +298,10 @@
+    . '<br />'."\n".'<input type="text" size="40" name="vacation_subject" value="' . $vacation_subject . '" />'
+    . '<br /><br />'."\n" . _("Vacation message:") 
+    . '<br /><textarea name="vacation_message" rows="8" cols="50">'
+-   . $vacation_message . '</textarea><br /><br />';
++   . $vacation_message . '</textarea><br /><br />'
++   . _("Generate auto-reply also for following aliases (one per line)")
++   . '<br /><textarea name="vacation_aliases" rows="8" cols="50">'
++   . $vacation_aliases . '</textarea><br /><br />';
+ 
+ 
+ 
