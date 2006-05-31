@@ -13,6 +13,7 @@ Patch0:		%{name}-Makefile.patch
 Patch1:		%{name}-config.patch
 Patch2:		%{name}-sudo.patch
 Patch3:		%{name}-alias_support.patch
+Patch4:		%{name}-db.patch
 URL:		http://www.squirrelmail.org/
 Requires:	php-ftp
 Requires:	squirrelmail >= 1.4.6-2
@@ -38,6 +39,7 @@ odpowiedzi na wszystkie przychodz±ce maile.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
+%patch4 -p1
 
 %install
 rm -rf $RPM_BUILD_ROOT
