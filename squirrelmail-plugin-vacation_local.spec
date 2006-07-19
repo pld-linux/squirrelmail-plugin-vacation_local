@@ -14,7 +14,7 @@ Patch1:		%{name}-config.patch
 Patch2:		%{name}-sudo.patch
 Patch3:		%{name}-alias_support.patch
 Patch4:		%{name}-db.patch
-URL:		http://www.squirrelmail.org/
+URL:		http://www.squirrelmail.org/plugin_view.php?id=51
 Requires:	php-ftp
 Requires:	squirrelmail >= 1.4.6-2
 Obsoletes:	squirrelmail-plugin-vacation
