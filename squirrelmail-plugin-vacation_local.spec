@@ -4,7 +4,7 @@ Summary:	Vacation plugin for Squirrelmail
 Summary(pl):	Wtyczka vacation dla Squirrelmail
 Name:		squirrelmail-plugin-%{_plugin}
 Version:	2.0
-Release:	1
+Release:	2
 License:	GPL
 Group:		Applications/Mail
 Source0:	http://www.squirrelmail.org/plugins/%{_plugin}-%{version}-%{mversion}.tar.gz
@@ -15,7 +15,7 @@ Patch2:		%{name}-sudo.patch
 Patch3:		%{name}-alias_support.patch
 Patch4:		%{name}-db.patch
 URL:		http://www.squirrelmail.org/plugin_view.php?id=51
-Requires:	php-ftp
+Requires:	php(ftp)
 Requires:	squirrelmail >= 1.4.6-2
 Obsoletes:	squirrelmail-plugin-vacation
 Obsoletes:	squirrelmail-vacation
