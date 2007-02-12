@@ -1,7 +1,7 @@
 %define		_plugin	vacation_local
 %define		mversion	1.4
 Summary:	Vacation plugin for Squirrelmail
-Summary(pl.UTF-8):   Wtyczka vacation dla Squirrelmail
+Summary(pl.UTF-8):	Wtyczka vacation dla Squirrelmail
 Name:		squirrelmail-plugin-%{_plugin}
 Version:	2.0
 Release:	2
