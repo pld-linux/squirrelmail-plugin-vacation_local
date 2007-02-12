@@ -1,7 +1,7 @@
 %define		_plugin	vacation_local
 %define		mversion	1.4
 Summary:	Vacation plugin for Squirrelmail
-Summary(pl):	Wtyczka vacation dla Squirrelmail
+Summary(pl.UTF-8):   Wtyczka vacation dla Squirrelmail
 Name:		squirrelmail-plugin-%{_plugin}
 Version:	2.0
 Release:	2
@@ -29,9 +29,9 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 This plugin allows users to create an auto-respond message to all
 incoming email while they're away.
 
-%description -l pl
-Ta wtyczka umo¿liwia u¿ytkownikom stworzenie i w³±czenie automatycznej
-odpowiedzi na wszystkie przychodz±ce maile.
+%description -l pl.UTF-8
+Ta wtyczka umoÅ¼liwia uÅ¼ytkownikom stworzenie i wÅ‚Ä…czenie automatycznej
+odpowiedzi na wszystkie przychodzÄ…ce maile.
 
 %prep
 %setup -q -n %{_plugin}
